@@ -58,19 +58,40 @@ class DataIngestor:
         logging.info(f"Ingested {len(df)} records successfully.")
         return df
 
+import os
+import sys
+
+# Ensure src is in path to import nlp_engine
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from nlp_engine import NLPEngine
+
 if __name__ == "__main__":
     ingestor = DataIngestor(source_type="mock")
     data_df = ingestor.ingest()
     print("\nIngested Data Sample:")
     print(data_df.head())
     
+    logging.info("Initializing NLP Engine for Sentiment Analysis...")
+    nlp = NLPEngine()
+    
+    logging.info("Applying sentiment analysis to ingested data...")
+    # Apply sentiment analysis
+    sentiments = data_df['text'].apply(nlp.analyze_sentiment)
+    
+    # Unpack the dictionary returned by analyze_sentiment into separate columns
+    data_df['sentiment_label'] = sentiments.apply(lambda x: x['label'])
+    data_df['sentiment_score'] = sentiments.apply(lambda x: x['score'])
+    data_df['sentiment_confidence'] = sentiments.apply(lambda x: x['confidence'])
+    
+    print("\nData with Sentiment Analysis:")
+    print(data_df[['id', 'sentiment_label', 'sentiment_score', 'text']].head())
+    
     # Save the mock data to our data directory for tracking
-    output_path = "../data/sample_news.csv"
-    try:
-        # Assuming run from src/
-        data_df.to_csv(output_path, index=False)
-        logging.info(f"Saved ingested data to {output_path}")
-    except Exception as e:
-        # Fallback if run from root
-        data_df.to_csv("data/sample_news.csv", index=False)
-        logging.info("Saved ingested data to data/sample_news.csv")
+    output_path = "data/news_with_sentiment.csv"
+    
+    # Ensure we are saving relative to the project root
+    if not os.path.exists('data'):
+        os.makedirs('data')
+        
+    data_df.to_csv(output_path, index=False)
+    logging.info(f"Saved enriched data to {output_path}")
