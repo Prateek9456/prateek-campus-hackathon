@@ -74,24 +74,46 @@ if __name__ == "__main__":
     logging.info("Initializing NLP Engine for Sentiment Analysis...")
     nlp = NLPEngine()
     
-    logging.info("Applying sentiment analysis to ingested data...")
-    # Apply sentiment analysis
-    sentiments = data_df['text'].apply(nlp.analyze_sentiment)
+    logging.info("Applying sentiment analysis, event classification, and impact scoring...")
     
-    # Unpack the dictionary returned by analyze_sentiment into separate columns
-    data_df['sentiment_label'] = sentiments.apply(lambda x: x['label'])
-    data_df['sentiment_score'] = sentiments.apply(lambda x: x['score'])
-    data_df['sentiment_confidence'] = sentiments.apply(lambda x: x['confidence'])
+    # Initialize lists to store our calculated signals
+    sentiment_labels, sentiment_scores, sentiment_confidences = [], [], []
+    event_classes, event_confidences = [], []
+    impact_scores = []
     
-    print("\nData with Sentiment Analysis:")
-    print(data_df[['id', 'sentiment_label', 'sentiment_score', 'text']].head())
+    for text in data_df['text']:
+        # 1. Sentiment
+        sentiment = nlp.analyze_sentiment(text)
+        sentiment_labels.append(sentiment['label'])
+        sentiment_scores.append(sentiment['score'])
+        sentiment_confidences.append(sentiment['confidence'])
+        
+        # 2. Event Classification
+        event = nlp.classify_event(text)
+        event_classes.append(event['event_class'])
+        event_confidences.append(event['classification_confidence'])
+        
+        # 3. Impact Scoring
+        impact = nlp.calculate_impact_score(text, sentiment['score'], event['event_class'])
+        impact_scores.append(impact)
+        
+    # Append all signals to the dataframe
+    data_df['sentiment_label'] = sentiment_labels
+    data_df['sentiment_score'] = sentiment_scores
+    data_df['sentiment_confidence'] = sentiment_confidences
+    data_df['event_class'] = event_classes
+    data_df['event_confidence'] = event_confidences
+    data_df['impact_score'] = impact_scores
+    
+    print("\nData with Full Risk Signals (Sentiment, Event, Impact):")
+    print(data_df[['id', 'sentiment_label', 'event_class', 'impact_score', 'text']].head())
     
     # Save the mock data to our data directory for tracking
-    output_path = "data/news_with_sentiment.csv"
+    output_path = "data/news_with_sentiment_and_impact.csv"
     
     # Ensure we are saving relative to the project root
     if not os.path.exists('data'):
         os.makedirs('data')
         
     data_df.to_csv(output_path, index=False)
-    logging.info(f"Saved enriched data to {output_path}")
+    logging.info(f"Saved fully enriched risk signal data to {output_path}")
