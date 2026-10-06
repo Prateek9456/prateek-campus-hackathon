@@ -6,18 +6,26 @@ import torch.nn.functional as F
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class NLPEngine:
-    def __init__(self, model_name="ProsusAI/finbert"):
+    def __init__(self, sentiment_model="ProsusAI/finbert", zero_shot_model="facebook/bart-large-mnli"):
         """
-        Initialize the NLP Risk Engine with a pre-trained Financial BERT model.
+        Initialize the NLP Risk Engine with models for sentiment analysis and event classification.
         """
-        logging.info(f"Loading NLP model: {model_name}. This might take a moment on first run...")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        logging.info(f"Loading Sentiment model: {sentiment_model}...")
+        self.tokenizer = AutoTokenizer.from_pretrained(sentiment_model)
+        self.model = AutoModelForSequenceClassification.from_pretrained(sentiment_model)
         
         # Check if GPU is available
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
-        logging.info(f"Model loaded successfully on device: {self.device}")
+        logging.info(f"Sentiment model loaded successfully on device: {self.device}")
+        
+        logging.info(f"Loading Zero-Shot Classification model: {zero_shot_model}...")
+        # Using pipeline for zero-shot for simplicity and robustness
+        from transformers import pipeline
+        # device=0 for CUDA, -1 for CPU
+        pipeline_device = 0 if torch.cuda.is_available() else -1
+        self.classifier = pipeline("zero-shot-classification", model=zero_shot_model, device=pipeline_device)
+        logging.info("Zero-Shot Classification model loaded successfully.")
 
     def analyze_sentiment(self, text: str):
         """
@@ -56,6 +64,32 @@ class NLPEngine:
             "confidence": round(probabilities[0][pred_idx].item(), 4)
         }
 
+    def classify_event(self, text: str):
+        """
+        Categorize the financial event into predefined classes using zero-shot classification.
+        """
+        candidate_labels = [
+            "Geopolitical", 
+            "Macroeconomic", 
+            "Credit Event", 
+            "Merger and Acquisition", 
+            "Product Launch",
+            "Regulatory",
+            "Earnings Report"
+        ]
+        
+        # Perform classification
+        result = self.classifier(text, candidate_labels)
+        
+        # The highest scoring label is the first in the list
+        top_label = result['labels'][0]
+        top_score = result['scores'][0]
+        
+        return {
+            "event_class": top_label,
+            "classification_confidence": round(top_score, 4)
+        }
+
 if __name__ == "__main__":
     # Quick test of the engine
     engine = NLPEngine()
@@ -68,6 +102,8 @@ if __name__ == "__main__":
     
     print("\n--- NLP Engine Sentiment Test ---")
     for t in test_texts:
-        result = engine.analyze_sentiment(t)
+        sentiment_result = engine.analyze_sentiment(t)
+        event_result = engine.classify_event(t)
         print(f"Text: {t}")
-        print(f"Result: {result}\n")
+        print(f"Sentiment: {sentiment_result}")
+        print(f"Event Class: {event_result}\n")
