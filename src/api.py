@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 import uvicorn
 import logging
 import pandas as pd
@@ -12,6 +15,24 @@ app = FastAPI(
     description="API for distributing real-time financial risk signals to downstream modules.",
     version="1.0.0"
 )
+
+# Add CORS middleware to allow the Streamlit dashboard or other modules to access the API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+# Global error handler for validation errors to ensure clean JSON responses
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"status": "error", "message": "Invalid request payload", "details": exc.errors()},
+    )
+
 
 @app.get("/")
 def read_root():
