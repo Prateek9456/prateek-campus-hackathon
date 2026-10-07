@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import uvicorn
 import logging
+import pandas as pd
+from schemas import SignalListResponse, AnalyzeTextRequest, RiskSignalResponse
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -27,6 +29,27 @@ def api_status():
         "api": "operational",
         "nlp_engine": "standby",
         "data_ingestion": "standby"
+    }
+
+@app.get("/api/signals/latest", response_model=SignalListResponse)
+def get_latest_signals():
+    """
+    Fetches the latest pre-processed risk signals from the data pipeline output.
+    """
+    try:
+        df = pd.read_csv("../data/news_with_sentiment_and_impact.csv")
+    except FileNotFoundError:
+        try:
+            df = pd.read_csv("data/news_with_sentiment_and_impact.csv")
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Processed signals not found")
+            
+    # Convert dataframe to list of dicts matching our schema
+    records = df.to_dict(orient="records")
+    return {
+        "status": "success",
+        "count": len(records),
+        "data": records
     }
 
 if __name__ == "__main__":
