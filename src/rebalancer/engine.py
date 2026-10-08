@@ -33,12 +33,27 @@ class RebalanceEngine:
         aggregate_sentiment = sum([s['sentiment_score'] for s in signals]) / len(signals)
         logging.info(f"Aggregate Market Sentiment: {aggregate_sentiment:.4f}")
         
+        # Determine dominant event classification (simplification for prototype)
+        event_counts = {}
+        for s in signals:
+            cls = s['event_class']
+            event_counts[cls] = event_counts.get(cls, 0) + 1
+        dominant_event = max(event_counts, key=event_counts.get) if event_counts else "Unknown"
+        logging.info(f"Dominant Market Event Theme: {dominant_event}")
+        
         df = self.portfolio.get_portfolio()
         
         # Core Rebalancing Logic:
         # If sentiment is highly positive, we might overweight Tech/Consumer Discretionary.
         # If sentiment is highly negative, we might overweight defensive sectors (Healthcare, Staples).
         
+        # Event Modifier Logic:
+        # Geopolitical / Macroeconomic events trigger stronger defensive rotations.
+        event_multiplier = 1.0
+        if dominant_event in ["Geopolitical", "Macroeconomic"]:
+            event_multiplier = 1.5
+            logging.info("Applying high-volatility event multiplier to rebalancing weights.")
+            
         for index, row in df.iterrows():
             current_weight = row['current_weight']
             sector = row['sector']
@@ -57,10 +72,10 @@ class RebalanceEngine:
             elif aggregate_sentiment < -0.2:
                 # Bearish: Boost Defensive
                 if sector in ["Consumer Staples", "Healthcare"]:
-                    adjustment = self.config.SENTIMENT_ADJUSTMENT_FACTOR
+                    adjustment = self.config.SENTIMENT_ADJUSTMENT_FACTOR * event_multiplier
                 # Reduce Growth/Cyclical
                 elif sector in ["Technology", "Consumer Discretionary", "Financials"]:
-                    adjustment = -self.config.SENTIMENT_ADJUSTMENT_FACTOR
+                    adjustment = -self.config.SENTIMENT_ADJUSTMENT_FACTOR * event_multiplier
                     
             # Apply adjustment
             new_weight = current_weight + adjustment
