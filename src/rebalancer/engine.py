@@ -14,6 +14,7 @@ class RebalanceEngine:
         self.portfolio = MockPortfolio()
         self.client = RiskEngineClient()
         self.config = RebalancerConfig()
+        self.transaction_log = []
         
     def execute_rebalance(self):
         """
@@ -64,6 +65,18 @@ class RebalanceEngine:
             # Apply adjustment
             new_weight = current_weight + adjustment
             
+            # Apply Clamping based on config
+            new_weight = max(self.config.MIN_WEIGHT_PER_ASSET, min(self.config.MAX_WEIGHT_PER_ASSET, new_weight))
+            
+            # Log transaction if weight changed
+            if abs(new_weight - current_weight) > 0.001:
+                self.transaction_log.append({
+                    "ticker": row['ticker'],
+                    "old_weight": round(current_weight, 4),
+                    "new_weight": round(new_weight, 4),
+                    "action": "BUY" if new_weight > current_weight else "SELL"
+                })
+            
             # Update dataframe
             df.at[index, 'current_weight'] = new_weight
             
@@ -72,8 +85,18 @@ class RebalanceEngine:
         df['current_weight'] = df['current_weight'] / total_weight
         
         self.portfolio.portfolio_df = df
-        logging.info("Rebalancing complete.")
+        logging.info(f"Rebalancing complete. Recorded {len(self.transaction_log)} transaction events.")
         return df
+
+    def display_transaction_log(self):
+        if not self.transaction_log:
+            print("No transactions recorded.")
+            return
+            
+        print("\n--- Transaction Log ---")
+        log_df = pd.DataFrame(self.transaction_log)
+        print(log_df.to_string(index=False))
+        print("-----------------------\n")
 
 if __name__ == "__main__":
     engine = RebalanceEngine()
@@ -85,3 +108,5 @@ if __name__ == "__main__":
     
     print("\nPost-Rebalance Portfolio:")
     engine.portfolio.display_portfolio()
+    
+    engine.display_transaction_log()
