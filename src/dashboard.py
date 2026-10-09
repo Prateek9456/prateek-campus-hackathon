@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
 import requests
+import sys
+import os
+
+# Ensure we can import the rebalancer module
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'rebalancer')))
+from engine import RebalanceEngine
 
 # -------------------------------------------------------------------
 # Page Configuration & Styling
@@ -100,4 +106,25 @@ else:
         display_df.style.applymap(color_sentiment, subset=['sentiment_label']),
         use_container_width=True,
         hide_index=True
-    )
+
+    
+    st.markdown("---")
+    st.markdown("### ⚖️ Tactical Portfolio Rebalancing")
+    
+    # Run the Rebalancer Engine
+    with st.spinner("Executing Rebalancing Algorithm..."):
+        rebalancer = RebalanceEngine()
+        # Mocking the client signals with what we fetched for the UI
+        rebalancer.client.fetch_latest_signals = lambda: df_signals.to_dict(orient="records")
+        updated_portfolio_df = rebalancer.execute_rebalance()
+    
+    # Display the Chart
+    chart_data = updated_portfolio_df[['ticker', 'current_weight']].set_index('ticker')
+    st.bar_chart(chart_data)
+    
+    # Display Transaction Log
+    if rebalancer.transaction_log:
+        st.markdown("#### 📜 Transaction History")
+        st.dataframe(pd.DataFrame(rebalancer.transaction_log), use_container_width=True)
+    else:
+        st.info("No rebalancing transactions required at this time.")
