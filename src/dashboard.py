@@ -51,5 +51,53 @@ with st.sidebar:
 st.markdown('<h1 class="main-title">Unified AI/NLP Risk Engine</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Real-time Financial Risk Signals & Tactical Portfolio Rebalancing</p>', unsafe_allow_html=True)
 
-st.markdown("---")
-st.info("Waiting for data stream to initialize...", icon="⏳")
+# -------------------------------------------------------------------
+# Data Fetching Logic
+# -------------------------------------------------------------------
+@st.cache_data(ttl=5) # Cache for 5 seconds to simulate real-time polling
+def fetch_signals():
+    try:
+        # Connect to our API
+        response = requests.get("http://localhost:8000/api/signals/latest")
+        if response.status_code == 200:
+            data = response.json().get('data', [])
+            return pd.DataFrame(data)
+    except requests.exceptions.ConnectionError:
+        pass
+    
+    # Fallback to local CSV if API is offline
+    try:
+        return pd.read_csv("data/news_with_sentiment_and_impact.csv")
+    except Exception:
+        # Deep fallback for testing
+        try:
+            return pd.read_csv("../data/news_with_sentiment_and_impact.csv")
+        except Exception:
+            return pd.DataFrame()
+
+# -------------------------------------------------------------------
+# Dashboard Sections
+# -------------------------------------------------------------------
+df_signals = fetch_signals()
+
+if df_signals.empty:
+    st.error("❌ Failed to connect to Risk Engine API and no fallback data found.")
+else:
+    st.markdown("### 📡 Live Risk Signals Feed")
+    
+    # Format the dataframe for better UI presentation
+    display_df = df_signals[['text', 'sentiment_label', 'sentiment_score', 'event_class', 'impact_score']].copy()
+    
+    # Apply some styling based on sentiment
+    def color_sentiment(val):
+        if val == 'positive':
+            return 'color: #10B981; font-weight: bold;'
+        elif val == 'negative':
+            return 'color: #EF4444; font-weight: bold;'
+        return 'color: #6B7280;'
+        
+    st.dataframe(
+        display_df.style.applymap(color_sentiment, subset=['sentiment_label']),
+        use_container_width=True,
+        hide_index=True
+    )
