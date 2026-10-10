@@ -1,10 +1,10 @@
 # AI/NLP Risk Engine - S&P Global & Crisil Campus Hackathon 2026
 
-**Candidate Name:** Prateek
-**College Email ID:** [your_id@college.ac.in]
-**College / Campus:** [Your College Name]
-**Demo Video Link:** [YouTube / Unlisted]
-**Slide Deck Link (if hosted externally):** 
+**Candidate Name:** Prateek Vashishtha
+**College Email ID:** prateek.23bcg10010@vitbhopal.ac.in
+**College / Campus:** Vellore Institute of Technology
+**Demo Video Link:** [Pending - Add YouTube Unlisted Link Here]
+**Slide Deck Link:** [Included in repo at /docs/presentation.pptx]
 
 ---
 
