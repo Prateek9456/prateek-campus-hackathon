@@ -1,10 +1,10 @@
 # AI/NLP Risk Engine - S&P Global & Crisil Campus Hackathon 2026
 
-**Candidate Name:** Prateek Vashishtha
-**College Email ID:** prateek.23bcg10010@vitbhopal.ac.in
-**College / Campus:** Vellore Institute of Technology
-**Demo Video Link:** [Pending - Add YouTube Unlisted Link Here]
-**Slide Deck Link:** [Included in repo at /docs/presentation.pptx]
+**Candidate Name:** Prateek Vashishtha  
+**College Email ID:** prateek.23bcg10010@vitbhopal.ac.in  
+**College / Campus:** Vellore Institute of Technology  
+**Demo Video Link:** [Pending - Add YouTube Unlisted Link Here]  
+**Slide Deck Link (if hosted externally):** [Pending]  
 
 ---
 
@@ -64,8 +64,8 @@ Step-by-step commands to set up the environment and run the code locally:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/Prateek9456/prateek-campus-hackathon.git
-cd prateek-campus-hackathon
+git clone https://github.com/Prateek9456/VIT-PrateekVashishtha-hackathon.git
+cd VIT-PrateekVashishtha-hackathon
 
 # 2. Create and activate virtual environment
 python -m venv venv
