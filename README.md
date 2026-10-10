@@ -1,10 +1,10 @@
-# AI/NLP Risk Engine - S&P Global & Crisil Campus Hackathon 2026
+# Sentima Risk Engine - S&P Global & Crisil Campus Hackathon 2026
 
-**Candidate Name:** Prateek Vashishtha  
-**College Email ID:** prateek.23bcg10010@vitbhopal.ac.in  
-**College / Campus:** Vellore Institute of Technology  
-**Demo Video Link:** [Pending - Add YouTube Unlisted Link Here]  
-**Slide Deck Link (if hosted externally):** [Pending]  
+**Candidate Name:** Prateek Vashishtha<br>
+**College Email ID:** prateek.23bcg10010@vitbhopal.ac.in<br>
+**College / Campus:** Vellore Institute of Technology, Bhopal<br>
+**Demo Video Link:** [Pending - Add YouTube Unlisted Link Here]<br>
+**Slide Deck Link (if hosted externally):** [Pending]
 
 ---
 
